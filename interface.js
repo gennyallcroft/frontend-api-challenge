@@ -19,6 +19,7 @@ $(document).ready(function() {
   $("#user-details").click(function(e){
     e.preventDefault();
     addUser();
+
     // peepsRedirect();
    });
 
@@ -28,7 +29,7 @@ $(document).ready(function() {
 
    $("#new-session").click(function(e){
      e.preventDefault();
-     newSession().then(console.log(user_id));
+     newSession();
      // peepsRedirect();
     });
 
@@ -47,6 +48,9 @@ $(document).ready(function() {
 
 
 });
+var sessionDetails;
+var handle;
+var password;
 
   function signUpRedirect() {
       window.location.href = "/Users/student/Documents/projects/frontend-api-challenge/signup.html";
@@ -61,34 +65,73 @@ $(document).ready(function() {
   };
 
   function newSession() {
-    var handle = $("#handle").val();
-    var password = $("#password").val();
-    postData('https://chitter-backend-api.herokuapp.com/sessions', {"session": {"handle":handle, "password":password }})
+    handle = $("#handle").val();
+    password = $("#password").val();
+    postSession();
+  };
+
+  function addUser() {
+   handle = $("#handle").val();
+   password = $("#password").val();
+   postUser('https://chitter-backend-api.herokuapp.com/users', {"user": {"handle": handle, "password": password }})
+     .then(data => console.log(JSON.stringify(data))) // JSON-string from `response.json()` call
+     .catch(error => console.error(error));
+};
+
+  function addPeep() {
+    var body = $("#peep-text").val();
+    console.log(body);
+    console.log(sessionDetails);
+    postPeep('https://chitter-backend-api.herokuapp.com/peeps', {"peep": {"user_id": sessionDetails.user_id, "body": body }})
       .then(data => console.log(JSON.stringify(data))) // JSON-string from `response.json()` call
       .catch(error => console.error(error));
   };
 
-  function addUser() {
-   var handle = $("#handle").val();
-   var password = $("#password").val();
-   postData('https://chitter-backend-api.herokuapp.com/users', {"user": {"handle": handle, "password": password }})
-     .then(data => console.log(JSON.stringify(data))) // JSON-string from `response.json()` call
-     .catch(error => console.error(error));
+  function postSession() {
+    console.log(JSON.stringify({"session": {"handle":handle, "password":password }}));
+    // $.post(
+    //   'https://chitter-backend-api.herokuapp.com/sessions',
+    //   JSON.stringify({session: {handle: handle, password: password }}),
+    //   function (data) { sessionDetails = data }
+    // )
+    $.ajax({
+     url: 'https://chitter-backend-api.herokuapp.com/sessions',
+     type: 'post',
+     dataType: 'json',
+     contentType: 'application/json',
+     success: function (data) {
+       sessionDetails = data;
+       console.log(sessionDetails);
+     },
+     data: JSON.stringify({"session": {"handle":handle, "password":password }})
+   });
+  };
 
-};
+  //
+  //   // Default options are marked with *
+  //     return fetch(url, {
+  //         method: 'POST', // *GET, POST, PUT, DELETE, etc.
+  //         mode: 'cors', // no-cors, cors, *same-origin
+  //         cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+  //         credentials: 'same-origin', // include, *same-origin, omit
+  //         headers: {
+  //             'Content-Type': 'application/json',
+  //             // 'Content-Type': 'application/x-www-form-urlencoded',
+  //         },
+  //         redirect: 'follow', // manual, *follow, error
+  //         referrer: 'no-referrer', // no-referrer, *client
+  //         body: JSON.stringify(data), // body data type must match "Content-Type" header
+  //         function(data) {
+  //           var sessionDetails = data;
+  //           console.log("TEST:" + sessionDetails);
+  //         }
+  //
+  //     })
+  //     .then(response => response.json()); // parses JSON response into native JavaScript objects
+  // };
 
-// function addPeep() {
-//   console.log(user_id);
-//   var body = $("#peep-text").val();
-//   console.log(body);
-//   postData('https://chitter-backend-api.herokuapp.com/peeps', {"peep": {"user_id": 1, "body": body }})
-//     .then(data => console.log(JSON.stringify(data))) // JSON-string from `response.json()` call
-//     .catch(error => console.error(error));
-// };
 
-
-
-   function postData(url = '', data = {}) {
+   function postUser(url = '', data = {}) {
      // Default options are marked with *
        return fetch(url, {
            method: 'POST', // *GET, POST, PUT, DELETE, etc.
@@ -102,9 +145,30 @@ $(document).ready(function() {
            redirect: 'follow', // manual, *follow, error
            referrer: 'no-referrer', // no-referrer, *client
            body: JSON.stringify(data), // body data type must match "Content-Type" header
+
        })
        .then(response => response.json()); // parses JSON response into native JavaScript objects
    };
+
+   function postPeep(url = '', data = {}) {
+     // Default options are marked with *
+       return fetch(url, {
+           method: 'POST', // *GET, POST, PUT, DELETE, etc.
+           mode: 'cors', // no-cors, cors, *same-origin
+           cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+           credentials: 'same-origin', // include, *same-origin, omit
+           headers: {
+               'Content-Type': 'application/json',
+               'Authorization': "'Token token =" + sessionDetails.session_key,
+               // 'Content-Type': 'application/x-www-form-urlencoded',
+           },
+           redirect: 'follow', // manual, *follow, error
+           referrer: 'no-referrer', // no-referrer, *client
+           body: JSON.stringify(data), // body data type must match "Content-Type" header
+       })
+       .then(response => response.json()); // parses JSON response into native JavaScript objects
+   };
+
 
 
   function printPeeps(data) {
